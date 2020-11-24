@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerController  MonoBehaviour
+public class PlayerController : MonoBehaviour
 {
     public Transform playerArms;
 
@@ -22,11 +22,14 @@ public class PlayerController  MonoBehaviour
     private CharacterController controller;
     private Vector3 moveDirection;
 
+    private int maxHealth = 100;
+    private int currentHealth;
     private float moveSpeed;
     private float xAxisClamp;
     private void Start()
     {
-        controller = GetComponentCharacterController();
+        controller = GetComponent<CharacterController>();
+        currentHealth = maxHealth;
     }
 
     private void Update()
@@ -36,16 +39,16 @@ public class PlayerController  MonoBehaviour
         Move();
     }
 
-    
-      Player Rotate Function.
-     
-    void RotateCamera()
+    /**
+     * Player Rotate Function.
+     */
+    protected void RotateCamera()
     {
-        float mouseX = Input.GetAxis(Mouse X);
-        float mouseY = Input.GetAxis(Mouse Y);
+        float mouseX = Input.GetAxis("Mouse X");
+        float mouseY = Input.GetAxis("Mouse Y");
 
-        float rotAmountX = mouseX  mouseSensitivity;
-        float rotAmountY = mouseY  mouseSensitivity;
+        float rotAmountX = mouseX * mouseSensitivity;
+        float rotAmountY = mouseY * mouseSensitivity;
 
         xAxisClamp -= rotAmountY;
 
@@ -56,12 +59,12 @@ public class PlayerController  MonoBehaviour
         rotPlayerArms.z = 0;
         rotPlayer.y += rotAmountX;
 
-        if (xAxisClamp  90)
+        if (xAxisClamp > 90)
         {
             xAxisClamp = 90;
             rotPlayerArms.x = 90;
         }
-        else if (xAxisClamp  -90)
+        else if (xAxisClamp < -90)
         {
             xAxisClamp = -90;
             rotPlayerArms.x = 270;
@@ -71,13 +74,13 @@ public class PlayerController  MonoBehaviour
         transform.rotation = Quaternion.Euler(rotPlayer);
     }
 
-    
-      Player Move Function.
-     
-    void Move()
+    /**
+     * Player Move Function.
+     */
+    protected void Move()
     {
-        float moveX = Input.GetAxis(Horizontal);
-        float moveZ = Input.GetAxis(Vertical);
+        float moveX = Input.GetAxis("Horizontal");
+        float moveZ = Input.GetAxis("Vertical");
 
         if (controller.isGrounded) {
             moveDirection = new Vector3(moveX, 0, moveZ);
@@ -87,15 +90,44 @@ public class PlayerController  MonoBehaviour
             else
                 moveSpeed = walkSpeed;
 
-            moveDirection = moveSpeed;
+            moveDirection *= moveSpeed;
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 moveDirection.y += jumpSpeed;
             }
         }
-        moveDirection.y -= gravity  Time.deltaTime;
+        moveDirection.y -= gravity * Time.deltaTime;
 
-        controller.Move(moveDirection  Time.deltaTime);
+        controller.Move(moveDirection * Time.deltaTime);
+    }
+
+    public void AddHealth(int amount)
+    {
+        currentHealth += amount;
+        CheckHealth();
+    }
+
+    public void ExtractHealth(int amount)
+    {
+        currentHealth -= amount;
+        CheckHealth();
+    }
+
+    public void CheckHealth()
+    {
+        if (currentHealth >= 100)
+            currentHealth = 100;
+        if (currentHealth <= 0)
+        {
+            currentHealth = 0;
+            Die();
+        }
+    }
+
+    private void Die()
+    {
+        gameObject.SetActive(false);
+        Debug.Log("Died.");
     }
 }
